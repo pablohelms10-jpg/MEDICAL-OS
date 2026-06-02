@@ -109,8 +109,10 @@ function renderYearGrid() {
 
     const card = document.createElement('div');
     card.className = 'year-card glass-card scroll-reveal';
-    card.style.setProperty('--card-accent', meta.grad);
+    card.style.setProperty('--card-grad', meta.grad);
+    card.style.setProperty('--card-shadow', meta.color + '33');
     card.innerHTML = `
+      <div class="card-glow"></div>
       <div class="yc-icon" style="background:${meta.grad}">${meta.emoji}</div>
       <div class="yc-num">Año ${y}</div>
       <div class="yc-title">${meta.label}</div>
