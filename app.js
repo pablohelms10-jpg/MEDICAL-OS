@@ -1,15 +1,15 @@
 /* ============================================================
-   MEDICAL OS — Application Logic
+   MEDICAL OS v4 — Application Logic
    ============================================================ */
 
 const YEAR_META = {
-  1: { label: '1er Año', sub: 'Ciencias Básicas', emoji: '🔬', color: '#6366f1', grad: 'linear-gradient(135deg,#6366f1,#818cf8)' },
-  2: { label: '2do Año', sub: 'Anatomía y Fisiología', emoji: '🫀', color: '#8b5cf6', grad: 'linear-gradient(135deg,#8b5cf6,#a78bfa)' },
-  3: { label: '3er Año', sub: 'Patología y Farmacología', emoji: '💊', color: '#ec4899', grad: 'linear-gradient(135deg,#ec4899,#f472b6)' },
-  4: { label: '4to Año', sub: 'Clínica Médica', emoji: '🩺', color: '#f59e0b', grad: 'linear-gradient(135deg,#f59e0b,#fbbf24)' },
-  5: { label: '5to Año', sub: 'Especialidades', emoji: '🏥', color: '#10b981', grad: 'linear-gradient(135deg,#10b981,#34d399)' },
-  6: { label: '6to Año', sub: 'Internado', emoji: '👨‍⚕️', color: '#0ea5e9', grad: 'linear-gradient(135deg,#0ea5e9,#38bdf8)' },
-  7: { label: '7mo Año', sub: 'Residencia y Especialización', emoji: '🎓', color: '#ef4444', grad: 'linear-gradient(135deg,#ef4444,#f87171)' },
+  1: { label: '1er Año', sub: 'Ciencias Básicas',              emoji: '🔬', color: '#6366f1', grad: 'linear-gradient(135deg,#6366f1,#818cf8)' },
+  2: { label: '2do Año', sub: 'Anatomía y Fisiología',         emoji: '🫀', color: '#8b5cf6', grad: 'linear-gradient(135deg,#8b5cf6,#a78bfa)' },
+  3: { label: '3er Año', sub: 'Patología y Farmacología',      emoji: '💊', color: '#ec4899', grad: 'linear-gradient(135deg,#ec4899,#f472b6)' },
+  4: { label: '4to Año', sub: 'Clínica Médica',                emoji: '🩺', color: '#f59e0b', grad: 'linear-gradient(135deg,#f59e0b,#fbbf24)' },
+  5: { label: '5to Año', sub: 'Especialidades',                emoji: '🏥', color: '#10b981', grad: 'linear-gradient(135deg,#10b981,#34d399)' },
+  6: { label: '6to Año', sub: 'Internado',                     emoji: '👨‍⚕️', color: '#0ea5e9', grad: 'linear-gradient(135deg,#0ea5e9,#38bdf8)' },
+  7: { label: '7mo Año', sub: 'Residencia y Especialización',  emoji: '🎓', color: '#ef4444', grad: 'linear-gradient(135deg,#ef4444,#f87171)' },
 };
 
 // ── State ──────────────────────────────────────────────────
@@ -20,7 +20,7 @@ let state = JSON.parse(localStorage.getItem('medos-state') || 'null') || {
   studiedToday: 0,
   streak: 1,
   lastStudyDate: null,
-  widgets: {},  // { id: { x, y, w, h, collapsed } }
+  palette: 'chromatic',
 };
 
 // ── Default 2do año data ───────────────────────────────────
@@ -32,25 +32,25 @@ const DEFAULT_YEAR2 = [
       {
         id: 'era1', label: 'ERA 1',
         topics: [
-          { id: 't1', label: 'Introducción a la Anatomía', done: false },
-          { id: 't2', label: 'Sistema Óseo — Generalidades', done: false },
-          { id: 't3', label: 'Columna Vertebral', done: false },
+          { id: 't1', label: 'Introducción a la Anatomía', done: false, content: [] },
+          { id: 't2', label: 'Sistema Óseo — Generalidades', done: false, content: [] },
+          { id: 't3', label: 'Columna Vertebral', done: false, content: [] },
         ]
       },
       {
         id: 'era2', label: 'ERA 2',
         topics: [
-          { id: 't4', label: 'Miembro Superior', done: false },
-          { id: 't5', label: 'Miembro Inferior', done: false },
-          { id: 't6', label: 'Articulaciones', done: false },
+          { id: 't4', label: 'Miembro Superior', done: false, content: [] },
+          { id: 't5', label: 'Miembro Inferior', done: false, content: [] },
+          { id: 't6', label: 'Articulaciones', done: false, content: [] },
         ]
       },
       {
         id: 'era3', label: 'ERA 3',
         topics: [
-          { id: 't7', label: 'Sistema Muscular', done: false },
-          { id: 't8', label: 'Tórax y Abdomen', done: false },
-          { id: 't9', label: 'Pelvis y Periné', done: false },
+          { id: 't7', label: 'Sistema Muscular', done: false, content: [] },
+          { id: 't8', label: 'Tórax y Abdomen', done: false, content: [] },
+          { id: 't9', label: 'Pelvis y Periné', done: false, content: [] },
         ]
       }
     ]
@@ -67,7 +67,7 @@ const DEFAULT_YEAR2 = [
 
 function seedYear2() {
   if (!state.classes['2'] || state.classes['2'].length === 0) {
-    state.classes['2'] = DEFAULT_YEAR2.map(s => ({ ...s }));
+    state.classes['2'] = JSON.parse(JSON.stringify(DEFAULT_YEAR2));
     save();
   }
 }
@@ -95,6 +95,39 @@ function formatDate(iso) {
   return new Date(iso).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
+// ── Palette ────────────────────────────────────────────────
+const PALETTES = [
+  { id: 'chromatic', name: 'Chromatic', desc: 'Arcoíris iridiscente', preview: 'linear-gradient(135deg,#a0c4ff,#c084fc,#ff9d6c,#a0c4ff)' },
+  { id: 'minimal',   name: 'Minimal',   desc: 'Blanco y negro puro',   preview: 'linear-gradient(135deg,#fff,#888,#fff)' },
+  { id: 'midnight',  name: 'Midnight',  desc: 'Azul profundo',         preview: 'linear-gradient(135deg,#3b82f6,#60a5fa,#93c5fd)' },
+  { id: 'warm',      name: 'Warm',      desc: 'Dorado y ámbar',        preview: 'linear-gradient(135deg,#f59e0b,#fbbf24,#fde68a)' },
+  { id: 'violet',    name: 'Violet',    desc: 'Violeta místico',       preview: 'linear-gradient(135deg,#8b5cf6,#a78bfa,#c4b5fd)' },
+  { id: 'emerald',   name: 'Emerald',   desc: 'Verde esmeralda',       preview: 'linear-gradient(135deg,#10b981,#34d399,#6ee7b7)' },
+];
+
+function applyPalette(id) {
+  document.documentElement.setAttribute('data-palette', id);
+  state.palette = id;
+  save();
+  document.querySelectorAll('.palette-card').forEach(c => {
+    c.classList.toggle('selected', c.dataset.palette === id);
+  });
+}
+
+function renderSettings() {
+  const grid = document.getElementById('paletteGrid');
+  grid.innerHTML = PALETTES.map(p => `
+    <div class="palette-card ${p.id === state.palette ? 'selected' : ''}" data-palette="${p.id}">
+      <div class="palette-preview" style="background:${p.preview}"></div>
+      <div class="palette-name">${p.name}</div>
+      <div class="palette-desc">${p.desc}</div>
+    </div>
+  `).join('');
+  grid.querySelectorAll('.palette-card').forEach(card => {
+    card.addEventListener('click', () => applyPalette(card.dataset.palette));
+  });
+}
+
 // ── Navigation ─────────────────────────────────────────────
 let currentView = 'dashboard';
 let currentYear = 1;
@@ -114,7 +147,6 @@ function showView(viewId, year) {
   if (viewId === 'year' && year) {
     currentYear = parseInt(year);
     renderYearView(currentYear);
-
     const yearNav = document.querySelector(`.nav-item[data-year="${year}"]`);
     if (yearNav) yearNav.classList.add('active');
   }
@@ -122,8 +154,8 @@ function showView(viewId, year) {
   if (viewId === 'dashboard') renderDashboard();
   if (viewId === 'flashcards') renderFlashcards();
   if (viewId === 'progress') renderProgress();
+  if (viewId === 'settings') renderSettings();
 
-  // Scroll to top
   document.querySelector('.main').scrollTo({ top: 0, behavior: 'smooth' });
   initScrollReveal();
 }
@@ -143,7 +175,6 @@ function updateTotalProgress() {
   document.getElementById('totalProgressBar').style.width = pct + '%';
   document.getElementById('ringProgress').style.strokeDashoffset = 314 - (314 * pct / 100);
   document.getElementById('ringText').textContent = pct + '%';
-
   const done = [1,2,3,4,5,6,7].filter(y => getYearProgress(y) === 100).length;
   document.getElementById('totalProgressSub').textContent = `${done} de 7 años completados`;
 }
@@ -151,12 +182,10 @@ function updateTotalProgress() {
 function renderYearGrid() {
   const grid = document.getElementById('yearGrid');
   grid.innerHTML = '';
-
   for (let y = 1; y <= 7; y++) {
     const meta = YEAR_META[y];
     const pct  = getYearProgress(y);
     const classes = state.classes[y] || [];
-
     const card = document.createElement('div');
     card.className = 'year-card glass-card scroll-reveal';
     card.style.setProperty('--card-grad', meta.grad);
@@ -180,12 +209,10 @@ function renderYearGrid() {
 function renderRecentNotes() {
   const container = document.getElementById('recentNotes');
   const recent = [...state.notes].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 6);
-
   if (!recent.length) {
     container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📝</div><p>No hay notas aún. ¡Crea tu primera nota!</p></div>`;
     return;
   }
-
   container.innerHTML = recent.map(n => noteCardHTML(n)).join('');
   container.querySelectorAll('.note-card').forEach(el => {
     el.addEventListener('click', () => openNoteDetail(el.dataset.noteId));
@@ -221,7 +248,7 @@ function updatePills() {
   }
 }
 
-// ── Year View ──────────────────────────────────────────────
+// ── Year View (accordion) ──────────────────────────────────
 function renderYearView(year) {
   const meta = YEAR_META[year];
   document.getElementById('yearTitle').textContent = meta.label;
@@ -235,10 +262,10 @@ function renderYearView(year) {
   document.getElementById('yearProgressFill').style.width = pct + '%';
   document.getElementById('yearProgressStats').textContent = `${classes.length} materias · ${notes.length} notas`;
 
-  renderClassesList(year);
+  renderSubjectAccordions(year);
 }
 
-function renderClassesList(year) {
+function renderSubjectAccordions(year) {
   const container = document.getElementById('classesList');
   const classes = state.classes[year] || [];
 
@@ -247,90 +274,311 @@ function renderClassesList(year) {
     return;
   }
 
-  container.innerHTML = classes.map(cls => classCardHTML(cls, year)).join('');
-
-  // Attach note buttons
-  container.querySelectorAll('.cc-add-note').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const classId = btn.dataset.classId;
-      const cls = classes.find(c => c.id === classId);
-      openNoteModal(year, cls ? cls.name : '');
-    });
-  });
-
-  // Attach class progress buttons
-  container.querySelectorAll('.cc-increment').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const classId = btn.dataset.classId;
-      const cls = (state.classes[year] || []).find(c => c.id === classId);
-      if (cls && cls.completed < cls.total) {
-        cls.completed++;
-        save();
-        renderYearView(year);
-        updatePills();
-      }
-    });
-  });
-
-  // Toggle notes
-  container.querySelectorAll('.cc-toggle-notes').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const panel = document.getElementById('notes-panel-' + btn.dataset.classId);
-      if (panel) panel.classList.toggle('hidden');
-    });
-  });
-
-  // Note click
-  container.querySelectorAll('.note-card').forEach(el => {
-    el.addEventListener('click', () => openNoteDetail(el.dataset.noteId));
-  });
+  container.innerHTML = classes.map(cls => subjectCardHTML(cls, year)).join('');
+  attachSubjectEvents(container, year);
 }
 
-function classCardHTML(cls, year) {
+function subjectCardHTML(cls, year) {
   const meta = YEAR_META[year];
   const pct = cls.total ? Math.round((cls.completed / cls.total) * 100) : 0;
-  const notes = state.notes.filter(n => n.subject === cls.name && n.year == year);
+  const erasHTML = (cls.eras || []).map(era => eraHTML(era, cls.id)).join('');
 
   return `
-    <div class="class-card glass-card">
-      <div class="cc-header">
-        <div>
-          <div class="cc-name">${cls.name}</div>
-          <div class="cc-desc">${cls.desc || ''}</div>
+    <div class="subject-card" data-subject-id="${cls.id}">
+      <div class="subject-header">
+        <div class="subject-chevron">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M4 5l3 4 3-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
         </div>
-        <div class="cc-right">
-          <div class="cc-percent">${pct}%</div>
-          <div class="cc-actions">
-            <button class="cc-btn cc-increment" data-class-id="${cls.id}" title="Marcar clase completada">
-              <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
-                <path d="M2 6.5l3 3 6-6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-              </svg>
-              +1 clase
-            </button>
+        <div class="subject-name-wrap">
+          <span class="subject-name">${cls.name}</span>
+          <input class="subject-name-input" value="${cls.name}" style="display:none" />
+        </div>
+        <div class="subject-edit-btns" style="display:none;gap:4px">
+          <button class="cc-btn subject-save-name" data-id="${cls.id}">✓</button>
+          <button class="cc-btn subject-cancel-name">✗</button>
+        </div>
+        <div class="subject-meta">
+          <span class="subject-pct">${pct}%</span>
+          <div class="subject-actions">
+            <button class="cc-btn subject-edit-btn" data-id="${cls.id}" title="Editar nombre">✎</button>
+            <button class="cc-btn subject-delete-btn" data-id="${cls.id}" title="Eliminar">✕</button>
           </div>
         </div>
       </div>
-      <div class="cc-bar">
-        <div class="cc-fill" style="width:${pct}%;background:${meta.grad}"></div>
-      </div>
-      <div class="cc-footer">
-        <span class="cc-notes-count">${cls.completed}/${cls.total} clases · ${notes.length} notas</span>
-        <div style="display:flex;gap:8px">
-          <button class="cc-btn cc-toggle-notes" data-class-id="${cls.id}">
-            📝 Ver notas
-          </button>
-          <button class="cc-btn cc-add-note" data-class-id="${cls.id}">
-            + Nota
-          </button>
-        </div>
-      </div>
-      <div class="class-notes" id="notes-panel-${cls.id}" style="display:${notes.length ? 'block' : 'none'}">
-        <div class="class-notes-grid">
-          ${notes.map(n => noteCardHTML(n)).join('')}
+      <div class="subject-body">
+        <div class="subject-body-inner">
+          <div class="subject-bar-wrap">
+            <div class="subject-mini-bar">
+              <div class="subject-mini-fill" style="width:${pct}%;background:${meta.grad}"></div>
+            </div>
+            <span style="font-size:11px;color:var(--text-muted)">${cls.completed}/${cls.total} clases</span>
+          </div>
+          ${cls.desc ? `<div class="subject-desc" style="margin-top:8px;font-size:12px;color:var(--text-secondary)">${cls.desc}</div>` : ''}
+          <div class="era-panels" style="margin-top:14px">
+            ${erasHTML || '<div style="font-size:13px;color:var(--text-muted);padding:4px 0">Sin ERAs aún.</div>'}
+          </div>
+          <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;align-items:center">
+            <button class="cc-btn subject-increment" data-id="${cls.id}">✓ +1 clase</button>
+            <button class="cc-btn add-era-btn" data-subject-id="${cls.id}">+ ERA</button>
+            <button class="cc-btn cc-add-note" data-class-id="${cls.id}" data-class-name="${cls.name}">📝 Nota</button>
+          </div>
         </div>
       </div>
     </div>
   `;
+}
+
+function eraHTML(era, subjectId) {
+  const done  = era.topics.filter(t => t.done).length;
+  const total = era.topics.length;
+  return `
+    <div class="era-panel" data-era-id="${era.id}" data-subject-id="${subjectId}">
+      <div class="era-panel-header">
+        <span class="era-panel-title">
+          <span class="era-panel-chevron">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <path d="M3 4l3 4 3-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+          </span>
+          ${era.label}
+        </span>
+        <span class="era-panel-count">${done}/${total}</span>
+        <button class="era-add-topic text-btn" data-era-id="${era.id}" data-subject-id="${subjectId}" style="font-size:11px;margin-left:auto">+ Tema</button>
+      </div>
+      <div class="era-panel-body">
+        <div class="era-topic-list">
+          ${era.topics.map(t => topicHTML(t, era.id, subjectId)).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function topicHTML(t, eraId, subjectId) {
+  return `
+    <div class="era-topic-item ${t.done ? 'done' : ''}"
+         data-topic-id="${t.id}" data-era-id="${eraId}" data-subject-id="${subjectId}">
+      <div class="era-topic-check topic-check-btn"
+           data-topic-id="${t.id}" data-era-id="${eraId}" data-subject-id="${subjectId}">
+        ${t.done ? '✓' : ''}
+      </div>
+      <span class="era-topic-label topic-label"
+            data-topic-id="${t.id}" data-era-id="${eraId}" data-subject-id="${subjectId}">${t.label}</span>
+      ${(t.content || []).length > 0 ? '<span style="font-size:10px;color:var(--text-muted);margin-left:auto">●</span>' : ''}
+    </div>
+  `;
+}
+
+function attachSubjectEvents(container, year) {
+  // Toggle accordion
+  container.querySelectorAll('.subject-header').forEach(header => {
+    header.addEventListener('click', e => {
+      if (e.target.closest('.subject-edit-btn') || e.target.closest('.subject-delete-btn') ||
+          e.target.closest('.subject-edit-btns') || e.target.closest('.subject-meta')) return;
+      const card = header.closest('.subject-card');
+      card.classList.toggle('expanded');
+    });
+  });
+
+  // Edit name
+  container.querySelectorAll('.subject-edit-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const card = btn.closest('.subject-card');
+      card.querySelector('.subject-name').style.display = 'none';
+      card.querySelector('.subject-name-input').style.display = 'inline-block';
+      card.querySelector('.subject-name-input').focus();
+      card.querySelector('.subject-edit-btns').style.display = 'flex';
+      btn.style.display = 'none';
+      card.querySelector('.subject-delete-btn').style.display = 'none';
+    });
+  });
+
+  container.querySelectorAll('.subject-cancel-name').forEach(btn => {
+    btn.addEventListener('click', e => {
+      const card = btn.closest('.subject-card');
+      card.querySelector('.subject-name').style.display = '';
+      card.querySelector('.subject-name-input').style.display = 'none';
+      card.querySelector('.subject-edit-btns').style.display = 'none';
+      card.querySelector('.subject-edit-btn').style.display = '';
+      card.querySelector('.subject-delete-btn').style.display = '';
+    });
+  });
+
+  container.querySelectorAll('.subject-save-name').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.id;
+      const card = btn.closest('.subject-card');
+      const newName = card.querySelector('.subject-name-input').value.trim();
+      if (!newName) return;
+      const cls = (state.classes[year] || []).find(c => c.id === id);
+      if (cls) { cls.name = newName; save(); }
+      renderSubjectAccordions(year);
+    });
+  });
+
+  // Delete subject
+  container.querySelectorAll('.subject-delete-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      if (!confirm('¿Eliminar esta materia?')) return;
+      const id = btn.dataset.id;
+      state.classes[year] = (state.classes[year] || []).filter(c => c.id !== id);
+      save();
+      renderYearView(year);
+      updatePills();
+    });
+  });
+
+  // Increment class
+  container.querySelectorAll('.subject-increment').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.id;
+      const cls = (state.classes[year] || []).find(c => c.id === id);
+      if (cls && cls.completed < cls.total) { cls.completed++; save(); renderYearView(year); updatePills(); }
+    });
+  });
+
+  // Add note from subject
+  container.querySelectorAll('.cc-add-note').forEach(btn => {
+    btn.addEventListener('click', () => openNoteModal(year, btn.dataset.className));
+  });
+
+  // Topic check
+  container.querySelectorAll('.topic-check-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const { topicId, eraId, subjectId } = btn.dataset;
+      toggleTopicDone(year, subjectId, eraId, topicId);
+    });
+  });
+
+  // Open topic content
+  container.querySelectorAll('.topic-label').forEach(label => {
+    label.addEventListener('click', () => {
+      const { topicId, eraId, subjectId } = label.dataset;
+      openTopicModal(year, subjectId, eraId, topicId);
+    });
+  });
+
+  // ERA panel toggle
+  container.querySelectorAll('.era-panel-header').forEach(header => {
+    header.addEventListener('click', e => {
+      if (e.target.closest('.era-add-topic')) return;
+      header.closest('.era-panel').classList.toggle('expanded');
+    });
+  });
+
+  // Add ERA
+  container.querySelectorAll('.add-era-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const subjectId = btn.dataset.subjectId;
+      const label = prompt('Nombre del ERA (ej: ERA 4):');
+      if (!label) return;
+      const cls = (state.classes[year] || []).find(c => c.id === subjectId);
+      if (cls) {
+        if (!cls.eras) cls.eras = [];
+        cls.eras.push({ id: 'era-' + uid(), label, topics: [] });
+        save();
+        renderSubjectAccordions(year);
+        // Re-expand the card
+        const card = document.querySelector(`[data-subject-id="${subjectId}"].subject-card`);
+        if (card) card.classList.add('expanded');
+      }
+    });
+  });
+
+  // Add topic
+  container.querySelectorAll('.era-add-topic').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const { eraId, subjectId } = btn.dataset;
+      const label = prompt('Nombre del tema:');
+      if (!label) return;
+      const cls = (state.classes[year] || []).find(c => c.id === subjectId);
+      if (cls) {
+        const era = (cls.eras || []).find(e => e.id === eraId);
+        if (era) {
+          era.topics.push({ id: 't-' + uid(), label, done: false, content: [] });
+          save();
+          renderSubjectAccordions(year);
+          const card = document.querySelector(`.subject-card[data-subject-id="${subjectId}"]`);
+          if (card) card.classList.add('expanded');
+        }
+      }
+    });
+  });
+}
+
+function toggleTopicDone(year, subjectId, eraId, topicId) {
+  const cls = (state.classes[year] || []).find(c => c.id === subjectId);
+  if (!cls) return;
+  const era = (cls.eras || []).find(e => e.id === eraId);
+  if (!era) return;
+  const topic = era.topics.find(t => t.id === topicId);
+  if (!topic) return;
+  topic.done = !topic.done;
+  save();
+  renderSubjectAccordions(year);
+  // Re-expand
+  const card = document.querySelector(`.subject-card[data-subject-id="${subjectId}"]`);
+  if (card) card.classList.add('expanded');
+}
+
+// ── Topic Content Modal ────────────────────────────────────
+let topicContext = null; // { year, subjectId, eraId, topicId }
+let topicBlocks = [];
+
+function openTopicModal(year, subjectId, eraId, topicId) {
+  const cls = (state.classes[year] || []).find(c => c.id === subjectId);
+  if (!cls) return;
+  const era = (cls.eras || []).find(e => e.id === eraId);
+  if (!era) return;
+  const topic = era.topics.find(t => t.id === topicId);
+  if (!topic) return;
+
+  topicContext = { year, subjectId, eraId, topicId };
+  topicBlocks = JSON.parse(JSON.stringify(topic.content || []));
+
+  document.getElementById('topicModalTitle').textContent = topic.label;
+  renderTopicBlocks();
+  document.getElementById('topicModal').classList.add('open');
+}
+
+function renderTopicBlocks() {
+  const body = document.getElementById('topicModalBody');
+  if (!topicBlocks.length) {
+    body.innerHTML = `<div class="empty-state"><p>Sin contenido aún. Agrega texto o imágenes.</p></div>`;
+    return;
+  }
+  body.innerHTML = topicBlocks.map((b, i) => {
+    if (b.type === 'text') {
+      return `<div class="content-block">
+        <textarea class="glass-input content-text" data-idx="${i}" rows="4">${b.data}</textarea>
+        <button class="cc-btn danger block-remove" data-idx="${i}">✕</button>
+      </div>`;
+    } else {
+      return `<div class="content-block">
+        <img src="${b.data}" alt="imagen" class="content-img" />
+        <button class="cc-btn danger block-remove" data-idx="${i}">✕</button>
+      </div>`;
+    }
+  }).join('');
+
+  body.querySelectorAll('.content-text').forEach(ta => {
+    ta.addEventListener('input', () => {
+      topicBlocks[parseInt(ta.dataset.idx)].data = ta.value;
+    });
+  });
+
+  body.querySelectorAll('.block-remove').forEach(btn => {
+    btn.addEventListener('click', () => {
+      topicBlocks.splice(parseInt(btn.dataset.idx), 1);
+      renderTopicBlocks();
+    });
+  });
 }
 
 // ── Flashcards ─────────────────────────────────────────────
@@ -364,13 +612,11 @@ function setupFcStudy(cards) {
   fcIndex = 0;
   const container = document.getElementById('fcCardContainer');
   const empty     = document.getElementById('fcEmpty');
-
   if (!fcQueue.length) {
     container.style.display = 'none';
     empty.style.display = 'flex';
     return;
   }
-
   container.style.display = 'block';
   empty.style.display = 'none';
   showFcCard(0);
@@ -381,7 +627,6 @@ function showFcCard(idx) {
   const card = fcQueue[idx % fcQueue.length];
   const el = document.getElementById('fcCard');
   el.classList.remove('flipped');
-
   document.getElementById('fcTag').textContent = `${card.subject} · Año ${card.year}`;
   document.getElementById('fcQuestion').textContent = card.question;
   document.getElementById('fcAnswer').textContent = card.answer;
@@ -393,7 +638,6 @@ function showFcCard(idx) {
 function renderProgress() {
   const barsContainer = document.getElementById('yearBars');
   barsContainer.innerHTML = '';
-
   for (let y = 1; y <= 7; y++) {
     const meta = YEAR_META[y];
     const pct  = getYearProgress(y);
@@ -406,19 +650,18 @@ function renderProgress() {
     `;
     barsContainer.appendChild(div);
   }
-
   renderAchievements();
 }
 
 const ACHIEVEMENTS = [
-  { id: 'first-note',  icon: '📝', name: 'Primera Nota', desc: 'Creaste tu primera nota', condition: () => state.notes.length >= 1 },
-  { id: 'ten-notes',  icon: '📚', name: 'Estudioso', desc: '10 notas creadas', condition: () => state.notes.length >= 10 },
-  { id: 'first-card', icon: '🃏', name: 'Primer Flash', desc: 'Creaste tu primera flashcard', condition: () => state.flashcards.length >= 1 },
-  { id: 'ten-cards',  icon: '🎴', name: 'Coleccionista', desc: '10 flashcards creadas', condition: () => state.flashcards.length >= 10 },
-  { id: 'first-class',icon: '🏫', name: 'Primera Materia', desc: 'Creaste tu primera materia', condition: () => Object.values(state.classes).flat().length >= 1 },
-  { id: 'year1-50',   icon: '⭐', name: 'Medio 1er Año', desc: '50% del 1er año completado', condition: () => getYearProgress(1) >= 50 },
-  { id: 'year1-100',  icon: '🏆', name: '1er Año Completo', desc: '1er año al 100%', condition: () => getYearProgress(1) === 100 },
-  { id: 'all-done',   icon: '🎓', name: 'Médico', desc: 'Todos los años completados', condition: () => [1,2,3,4,5,6,7].every(y => getYearProgress(y) === 100) },
+  { id: 'first-note',   icon: '📝', name: 'Primera Nota',     desc: 'Creaste tu primera nota',       condition: () => state.notes.length >= 1 },
+  { id: 'ten-notes',    icon: '📚', name: 'Estudioso',         desc: '10 notas creadas',               condition: () => state.notes.length >= 10 },
+  { id: 'first-card',   icon: '🃏', name: 'Primer Flash',      desc: 'Creaste tu primera flashcard',   condition: () => state.flashcards.length >= 1 },
+  { id: 'ten-cards',    icon: '🎴', name: 'Coleccionista',     desc: '10 flashcards creadas',          condition: () => state.flashcards.length >= 10 },
+  { id: 'first-class',  icon: '🏫', name: 'Primera Materia',   desc: 'Creaste tu primera materia',     condition: () => Object.values(state.classes).flat().length >= 1 },
+  { id: 'year1-50',     icon: '⭐', name: 'Medio 1er Año',     desc: '50% del 1er año completado',     condition: () => getYearProgress(1) >= 50 },
+  { id: 'year1-100',    icon: '🏆', name: '1er Año Completo',  desc: '1er año al 100%',               condition: () => getYearProgress(1) === 100 },
+  { id: 'all-done',     icon: '🎓', name: 'Médico',            desc: 'Todos los años completados',     condition: () => [1,2,3,4,5,6,7].every(y => getYearProgress(y) === 100) },
 ];
 
 function renderAchievements() {
@@ -442,13 +685,11 @@ function openNoteDetail(noteId) {
   const note = state.notes.find(n => n.id === noteId);
   if (!note) return;
   selectedNoteId = noteId;
-
   const meta = YEAR_META[note.year];
   document.getElementById('noteDetailTitle').textContent = note.title;
   document.getElementById('noteDetailMeta').textContent = `${meta.label} · ${note.subject} · ${formatDate(note.date)}`;
   document.getElementById('noteDetailBody').textContent = note.content;
   document.getElementById('noteDetailTags').innerHTML = (note.tags || []).map(t => `<span class="note-tag">${t}</span>`).join('');
-
   document.getElementById('noteDetailModal').classList.add('open');
 }
 
@@ -473,17 +714,11 @@ function sendChatMessage() {
   const input = document.getElementById('chatInput');
   const text  = input.value.trim();
   if (!text) return;
-
   input.value = '';
   input.style.height = 'auto';
-
-  // Remove suggestions
   const sugg = document.getElementById('chatSuggestions');
   if (sugg) sugg.remove();
-
   appendMessage('user', text);
-
-  // Typing indicator
   const typingId = 'typing-' + uid();
   const typingEl = document.createElement('div');
   typingEl.className = 'chat-msg ai';
@@ -491,11 +726,9 @@ function sendChatMessage() {
   typingEl.innerHTML = `<div class="chat-msg-bubble"><div class="typing-indicator"><span></span><span></span><span></span></div></div>`;
   document.getElementById('chatMessages').appendChild(typingEl);
   scrollChat();
-
   setTimeout(() => {
     typingEl.remove();
-    const response = generateResponse(text);
-    appendMessage('ai', response);
+    appendMessage('ai', generateResponse(text));
   }, 800 + Math.random() * 600);
 }
 
@@ -515,8 +748,6 @@ function scrollChat() {
 
 function generateResponse(query) {
   const q = query.toLowerCase();
-
-  // Notes search
   const matchingNotes = state.notes.filter(n =>
     n.title.toLowerCase().includes(q) ||
     n.content.toLowerCase().includes(q) ||
@@ -529,13 +760,11 @@ function generateResponse(query) {
     const lines = [1,2,3,4,5,6,7].map(y => `• ${YEAR_META[y].label}: ${getYearProgress(y)}%`);
     return `📊 **Tu progreso actual:**\n\nProgreso total: ${pct}%\n\n${lines.join('\n')}`;
   }
-
   if (q.includes('flashcard') || q.includes('flash')) {
     const total = state.flashcards.length;
     const studied = state.flashcards.filter(f => f.studied).length;
     return `🃏 Tienes **${total} flashcards** en total, de las cuales **${studied} han sido estudiadas**.\n\nVe a la sección de Flashcards para estudiar.`;
   }
-
   if (q.includes('año') && /[1-7]/.test(q)) {
     const year = parseInt(q.match(/[1-7]/)[0]);
     const meta = YEAR_META[year];
@@ -544,19 +773,16 @@ function generateResponse(query) {
     const pct = getYearProgress(year);
     return `📚 **${meta.label} — ${meta.sub}**\n\n• Progreso: ${pct}%\n• Materias: ${classes.length}\n• Notas: ${notes.length}\n${classes.length ? '\nMaterias: ' + classes.map(c => c.name).join(', ') : ''}`;
   }
-
   if (q.includes('materia') || q.includes('asignatura')) {
     const all = Object.entries(state.classes).flatMap(([y, cs]) => cs.map(c => `Año ${y}: ${c.name}`));
     if (!all.length) return 'No tienes materias registradas aún. ¡Ve a un año y crea tu primera materia!';
     return `📚 Tus materias registradas:\n\n${all.map(m => '• ' + m).join('\n')}`;
   }
-
   if (q.includes('nota') || q.includes('notas')) {
     if (!state.notes.length) return 'No tienes notas aún. ¡Crea tu primera nota usando el botón "Nueva Nota"!';
     const recent = [...state.notes].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5);
     return `📝 Tienes **${state.notes.length} notas**. Las más recientes:\n\n${recent.map(n => `• ${n.title} (${n.subject})`).join('\n')}`;
   }
-
   if (matchingNotes.length) {
     if (matchingNotes.length === 1) {
       const n = matchingNotes[0];
@@ -564,7 +790,6 @@ function generateResponse(query) {
     }
     return `🔍 Encontré **${matchingNotes.length} notas** relacionadas:\n\n${matchingNotes.slice(0, 5).map(n => `• **${n.title}** (${n.subject})`).join('\n')}`;
   }
-
   const generic = [
     'Puedo ayudarte con información sobre tus notas, flashcards, progreso por año o materias. ¿Qué te gustaría saber?',
     'Prueba preguntarme: "¿Cuáles son mis notas de anatomía?" o "¿Cuál es mi progreso?"',
@@ -585,7 +810,6 @@ function initScrollReveal() {
         }
       });
     }, { threshold: 0.1 });
-
     els.forEach(el => observer.observe(el));
   }, 100);
 }
@@ -599,7 +823,6 @@ function initParallax() {
       h.style.transform = `translateY(${y * 0.3}px)`;
       h.style.opacity = Math.max(0.3, 1 - y * 0.002);
     });
-
     document.querySelectorAll('.orb').forEach((orb, i) => {
       const speed = [0.1, 0.15, 0.08, 0.12][i];
       const dir   = i % 2 === 0 ? 1 : -1;
@@ -640,7 +863,6 @@ function initSidebar() {
     }
   });
 
-  // Nav items
   document.querySelectorAll('.nav-item[data-view]').forEach(item => {
     item.addEventListener('click', () => {
       const view = item.dataset.view;
@@ -653,7 +875,7 @@ function initSidebar() {
   document.getElementById('backBtn').addEventListener('click', () => showView('dashboard'));
 }
 
-// ── Save note ──────────────────────────────────────────────
+// ── Modals init ────────────────────────────────────────────
 function initModals() {
   // Note modal
   document.getElementById('addNoteBtn').addEventListener('click', () => openNoteModal());
@@ -666,19 +888,12 @@ function initModals() {
     const title   = document.getElementById('noteTitle').value.trim();
     const content = document.getElementById('noteContent').value.trim();
     const tags    = document.getElementById('noteTags').value.split(',').map(t => t.trim()).filter(Boolean);
-
     if (!subject || !title || !content) return alert('Por favor completa todos los campos obligatorios.');
-
     const note = { id: uid(), year, subject, title, content, tags, date: new Date().toISOString() };
     state.notes.unshift(note);
-
-    // Ensure class exists
     if (!state.classes[year]) state.classes[year] = [];
     const existing = state.classes[year].find(c => c.name === subject);
-    if (!existing) {
-      state.classes[year].push({ id: uid(), name: subject, desc: '', total: 20, completed: 0 });
-    }
-
+    if (!existing) state.classes[year].push({ id: uid(), name: subject, desc: '', total: 20, completed: 0, eras: [] });
     save();
     closeModal('noteModal');
     document.getElementById('noteSubject').value = '';
@@ -708,15 +923,12 @@ function initModals() {
   });
   document.getElementById('closeFlashcardModal').addEventListener('click', () => closeModal('flashcardModal'));
   document.getElementById('cancelFcBtn').addEventListener('click', () => closeModal('flashcardModal'));
-
   document.getElementById('saveFcBtn').addEventListener('click', () => {
     const year     = parseInt(document.getElementById('fcYear').value);
     const subject  = document.getElementById('fcSubject').value.trim();
     const question = document.getElementById('fcQuestion').value.trim();
     const answer   = document.getElementById('fcAnswer').value.trim();
-
     if (!subject || !question || !answer) return alert('Por favor completa todos los campos.');
-
     state.flashcards.push({ id: uid(), year, subject, question, answer, studied: false });
     save();
     closeModal('flashcardModal');
@@ -732,22 +944,55 @@ function initModals() {
   });
   document.getElementById('closeClassModal').addEventListener('click', () => closeModal('classModal'));
   document.getElementById('cancelClassBtn').addEventListener('click', () => closeModal('classModal'));
-
   document.getElementById('saveClassBtn').addEventListener('click', () => {
     const name  = document.getElementById('className').value.trim();
     const desc  = document.getElementById('classDesc').value.trim();
     const total = parseInt(document.getElementById('classTotal').value) || 20;
-
     if (!name) return alert('Por favor ingresa el nombre de la materia.');
-
     if (!state.classes[currentYear]) state.classes[currentYear] = [];
-    state.classes[currentYear].push({ id: uid(), name, desc, total, completed: 0 });
-
+    state.classes[currentYear].push({ id: uid(), name, desc, total, completed: 0, eras: [] });
     save();
     closeModal('classModal');
     document.getElementById('className').value = '';
     document.getElementById('classDesc').value = '';
     renderYearView(currentYear);
+  });
+
+  // Topic content modal
+  document.getElementById('closeTopicModal').addEventListener('click', () => closeModal('topicModal'));
+  document.getElementById('topicAddText').addEventListener('click', () => {
+    topicBlocks.push({ type: 'text', data: '' });
+    renderTopicBlocks();
+  });
+  document.getElementById('topicAddImage').addEventListener('click', () => {
+    document.getElementById('topicImageInput').click();
+  });
+  document.getElementById('topicImageInput').addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      topicBlocks.push({ type: 'image', data: ev.target.result });
+      renderTopicBlocks();
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  });
+  document.getElementById('topicSave').addEventListener('click', () => {
+    if (!topicContext) return;
+    const { year, subjectId, eraId, topicId } = topicContext;
+    const cls = (state.classes[year] || []).find(c => c.id === subjectId);
+    if (!cls) return;
+    const era = (cls.eras || []).find(e => e.id === eraId);
+    if (!era) return;
+    const topic = era.topics.find(t => t.id === topicId);
+    if (!topic) return;
+    topic.content = JSON.parse(JSON.stringify(topicBlocks));
+    save();
+    closeModal('topicModal');
+    renderSubjectAccordions(year);
+    const card = document.querySelector(`.subject-card[data-subject-id="${subjectId}"]`);
+    if (card) card.classList.add('expanded');
   });
 
   // Close on overlay click
@@ -779,7 +1024,6 @@ function initFlashcardInteractions() {
     setTimeout(() => showFcCard(fcIndex), 50);
   });
 
-  // Filter buttons
   document.querySelectorAll('.filter-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
@@ -792,23 +1036,16 @@ function initFlashcardInteractions() {
 
 // ── Chat interactions ──────────────────────────────────────
 function initChat() {
-  const input  = document.getElementById('chatInput');
+  const input   = document.getElementById('chatInput');
   const sendBtn = document.getElementById('chatSend');
-
   sendBtn.addEventListener('click', sendChatMessage);
-
   input.addEventListener('keydown', e => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      sendChatMessage();
-    }
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChatMessage(); }
   });
-
   input.addEventListener('input', () => {
     input.style.height = 'auto';
     input.style.height = Math.min(input.scrollHeight, 120) + 'px';
   });
-
   window.medOS = { sendSuggestion };
 }
 
@@ -819,7 +1056,7 @@ function checkStreak() {
   const yesterday = new Date(Date.now() - 86400000).toDateString();
   if (state.lastStudyDate === yesterday) {
     state.streak = (state.streak || 0) + 1;
-  } else if (state.lastStudyDate !== today) {
+  } else {
     state.streak = 1;
   }
   state.lastStudyDate = today;
@@ -827,291 +1064,22 @@ function checkStreak() {
 }
 
 // ══════════════════════════════════════════════════════════════
-//  LIQUID GLASS FLOATING WIDGETS
+//  INIT
 // ══════════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  // Apply saved palette
+  applyPalette(state.palette || 'chromatic');
 
-function getWidgetState(id) {
-  if (!state.widgets[id]) {
-    // Default positions spread across screen
-    const defaults = {
-      'w-anatomia': { x: 80,  y: 120, w: 280, h: 'auto', collapsed: false },
-      'w-heg':      { x: 400, y: 140, w: 250, h: 'auto', collapsed: false },
-      'w-aps2':     { x: 700, y: 130, w: 250, h: 'auto', collapsed: false },
-    };
-    state.widgets[id] = defaults[id] || { x: 100, y: 100, w: 260, h: 'auto', collapsed: false };
-  }
-  return state.widgets[id];
-}
-
-function createWidget(subject) {
-  const ws = getWidgetState(subject.id);
-  const el = document.createElement('div');
-  el.className = 'liquid-widget glass-card';
-  el.id = 'widget-' + subject.id;
-  el.style.left   = ws.x + 'px';
-  el.style.top    = ws.y + 'px';
-  el.style.width  = ws.w + 'px';
-  if (ws.collapsed) el.classList.add('collapsed');
-
-  const hasEras = subject.eras && subject.eras.length > 0;
-
-  el.innerHTML = `
-    <div class="lw-header" data-id="${subject.id}">
-      <div class="lw-title-row">
-        <div class="lw-dot"></div>
-        <span class="lw-title">${subject.name}</span>
-        <span class="lw-subject-tag">${subject.desc.split(' ').slice(0,2).join(' ')}</span>
-      </div>
-      <div class="lw-controls">
-        <button class="lw-btn lw-shrink" title="Colapsar">−</button>
-        <button class="lw-btn lw-expand" title="Expandir">+</button>
-        <button class="lw-btn lw-close" title="Cerrar">×</button>
-      </div>
-    </div>
-    <div class="lw-body">
-      ${hasEras ? renderErasHTML(subject) : renderSimpleWidgetBody(subject)}
-    </div>
-    <div class="lw-resize">
-      <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-        <path d="M11 1L1 11M11 6L6 11M11 11" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
-      </svg>
-    </div>
-  `;
-
-  document.body.appendChild(el);
-  initWidgetInteractions(el, subject);
-  return el;
-}
-
-function renderErasHTML(subject) {
-  return subject.eras.map(era => {
-    const done  = era.topics.filter(t => t.done).length;
-    const total = era.topics.length;
-    return `
-      <div class="era-pill" data-era-id="${era.id}" data-subject-id="${subject.id}">
-        <span class="era-pill-name">${era.label}</span>
-        <span class="era-pill-count">${done}/${total}</span>
-        <div class="era-pill-topics">
-          ${era.topics.map(t => `
-            <div class="topic-item ${t.done ? 'done' : ''}"
-                 data-topic-id="${t.id}" data-era-id="${era.id}" data-subject-id="${subject.id}">
-              <div class="topic-check">${t.done ? '✓' : ''}</div>
-              <span class="topic-name">${t.label}</span>
-            </div>
-          `).join('')}
-        </div>
-      </div>
-    `;
-  }).join('');
-}
-
-function renderSimpleWidgetBody(subject) {
-  const cls = (state.classes['2'] || []).find(c => c.id === subject.id);
-  const pct = cls ? Math.round((cls.completed / cls.total) * 100) : 0;
-  const notes = state.notes.filter(n => n.subject === subject.name && n.year == 2);
-  return `
-    <div style="padding:4px 0 8px">
-      <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">${pct}% completado · ${notes.length} notas</div>
-      <div style="height:4px;background:rgba(255,255,255,0.07);border-radius:2px;overflow:hidden">
-        <div style="height:100%;width:${pct}%;background:rgba(255,255,255,0.45);border-radius:2px;transition:width .8s"></div>
-      </div>
-      <div style="margin-top:12px;font-size:12px;color:var(--text-muted)">Sin contenido ERAs definido aún.</div>
-    </div>
-  `;
-}
-
-function initWidgetInteractions(el, subject) {
-  const header = el.querySelector('.lw-header');
-  const btnShrink = el.querySelector('.lw-shrink');
-  const btnExpand = el.querySelector('.lw-expand');
-  const btnClose  = el.querySelector('.lw-close');
-  const resizeEl  = el.querySelector('.lw-resize');
-
-  // Collapse / expand
-  btnShrink.addEventListener('click', e => {
-    e.stopPropagation();
-    el.classList.add('collapsed');
-    state.widgets[subject.id].collapsed = true;
-    save();
-  });
-
-  btnExpand.addEventListener('click', e => {
-    e.stopPropagation();
-    el.classList.remove('collapsed');
-    state.widgets[subject.id].collapsed = false;
-    save();
-  });
-
-  btnClose.addEventListener('click', e => {
-    e.stopPropagation();
-    el.style.opacity = '0';
-    el.style.transform = 'scale(0.9)';
-    el.style.transition = 'all .25s';
-    setTimeout(() => el.remove(), 280);
-  });
-
-  // ERA accordion
-  el.querySelectorAll('.era-pill').forEach(pill => {
-    pill.addEventListener('click', e => {
-      if (e.target.closest('.topic-item')) return;
-      pill.classList.toggle('expanded');
-    });
-  });
-
-  // Topic checkboxes
-  el.querySelectorAll('.topic-item').forEach(item => {
-    item.addEventListener('click', e => {
-      e.stopPropagation();
-      const subjectId = item.dataset.subjectId;
-      const eraId     = item.dataset.eraId;
-      const topicId   = item.dataset.topicId;
-
-      const cls2 = (state.classes['2'] || []).find(c => c.id === subjectId);
-      if (!cls2 || !cls2.eras) return;
-
-      const era = cls2.eras.find(er => er.id === eraId);
-      if (!era) return;
-
-      const topic = era.topics.find(t => t.id === topicId);
-      if (!topic) return;
-
-      topic.done = !topic.done;
-      save();
-
-      item.classList.toggle('done', topic.done);
-      item.querySelector('.topic-check').textContent = topic.done ? '✓' : '';
-
-      // Update count
-      const pill = item.closest('.era-pill');
-      const totalDone = era.topics.filter(t => t.done).length;
-      pill.querySelector('.era-pill-count').textContent = `${totalDone}/${era.topics.length}`;
-    });
-  });
-
-  // ── Drag ──
-  makeDraggable(el, header, subject.id);
-
-  // ── Resize ──
-  makeResizable(el, resizeEl, subject.id);
-}
-
-function makeDraggable(el, handle, id) {
-  let startX, startY, startLeft, startTop;
-
-  handle.addEventListener('mousedown', e => {
-    if (e.target.closest('.lw-controls')) return;
-    e.preventDefault();
-    el.classList.add('dragging');
-    startX    = e.clientX;
-    startY    = e.clientY;
-    startLeft = el.offsetLeft;
-    startTop  = el.offsetTop;
-
-    function onMove(e) {
-      const dx = e.clientX - startX;
-      const dy = e.clientY - startY;
-      const newLeft = Math.max(0, startLeft + dx);
-      const newTop  = Math.max(0, startTop  + dy);
-      el.style.left = newLeft + 'px';
-      el.style.top  = newTop  + 'px';
-    }
-
-    function onUp() {
-      el.classList.remove('dragging');
-      state.widgets[id] = state.widgets[id] || {};
-      state.widgets[id].x = el.offsetLeft;
-      state.widgets[id].y = el.offsetTop;
-      save();
-      document.removeEventListener('mousemove', onMove);
-      document.removeEventListener('mouseup',   onUp);
-    }
-
-    document.addEventListener('mousemove', onMove);
-    document.addEventListener('mouseup',   onUp);
-  });
-
-  // Touch drag
-  handle.addEventListener('touchstart', e => {
-    if (e.target.closest('.lw-controls')) return;
-    const t = e.touches[0];
-    el.classList.add('dragging');
-    startX    = t.clientX; startY    = t.clientY;
-    startLeft = el.offsetLeft; startTop  = el.offsetTop;
-
-    function onMove(e) {
-      const touch = e.touches[0];
-      el.style.left = Math.max(0, startLeft + touch.clientX - startX) + 'px';
-      el.style.top  = Math.max(0, startTop  + touch.clientY - startY) + 'px';
-    }
-    function onUp() {
-      el.classList.remove('dragging');
-      state.widgets[id] = state.widgets[id] || {};
-      state.widgets[id].x = el.offsetLeft;
-      state.widgets[id].y = el.offsetTop;
-      save();
-      handle.removeEventListener('touchmove', onMove);
-      handle.removeEventListener('touchend',  onUp);
-    }
-    handle.addEventListener('touchmove', onMove, { passive: true });
-    handle.addEventListener('touchend',  onUp);
-  }, { passive: true });
-}
-
-function makeResizable(el, handle, id) {
-  let startX, startY, startW, startH;
-
-  handle.addEventListener('mousedown', e => {
-    e.stopPropagation(); e.preventDefault();
-    startX = e.clientX; startY = e.clientY;
-    startW = el.offsetWidth; startH = el.offsetHeight;
-
-    function onMove(e) {
-      const w = Math.max(220, startW + e.clientX - startX);
-      const h = Math.max(80,  startH + e.clientY - startY);
-      el.style.width  = w + 'px';
-      el.style.height = h + 'px';
-      el.querySelector('.lw-body').style.maxHeight = (h - 80) + 'px';
-    }
-    function onUp() {
-      state.widgets[id] = state.widgets[id] || {};
-      state.widgets[id].w = el.offsetWidth;
-      save();
-      document.removeEventListener('mousemove', onMove);
-      document.removeEventListener('mouseup',   onUp);
-    }
-    document.addEventListener('mousemove', onMove);
-    document.addEventListener('mouseup',   onUp);
-  });
-}
-
-function initWidgets() {
-  seedYear2();
-  const subjects = state.classes['2'] || [];
-  const widgetSubjects = subjects.filter(s => ['w-anatomia','w-heg','w-aps2'].includes(s.id));
-  widgetSubjects.forEach(s => createWidget(s));
-}
-
-// ── Init ───────────────────────────────────────────────────
-function init() {
   checkStreak();
   seedYear2();
+
   initSidebar();
   initModals();
   initFlashcardInteractions();
   initChat();
   initParallax();
   initParticles();
-  initWidgets();
+
   renderDashboard();
   initScrollReveal();
-
-  // Keyboard shortcuts
-  document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') {
-      document.querySelectorAll('.modal-overlay.open').forEach(m => m.classList.remove('open'));
-    }
-    if (e.ctrlKey && e.key === 'n') { e.preventDefault(); openNoteModal(); }
-  });
-}
-
-document.addEventListener('DOMContentLoaded', init);
+});
