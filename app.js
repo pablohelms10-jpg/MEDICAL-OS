@@ -14,13 +14,63 @@ const YEAR_META = {
 
 // ── State ──────────────────────────────────────────────────
 let state = JSON.parse(localStorage.getItem('medos-state') || 'null') || {
-  notes: [],       // { id, year, subject, title, content, tags, date }
-  classes: {},     // { "1": [{ id, name, desc, total, completed }], ... }
-  flashcards: [],  // { id, year, subject, question, answer, studied }
+  notes: [],
+  classes: {},
+  flashcards: [],
   studiedToday: 0,
   streak: 1,
   lastStudyDate: null,
+  widgets: {},  // { id: { x, y, w, h, collapsed } }
 };
+
+// ── Default 2do año data ───────────────────────────────────
+const DEFAULT_YEAR2 = [
+  {
+    id: 'w-anatomia', name: 'Anatomía', desc: 'Morfología del cuerpo humano',
+    total: 60, completed: 0,
+    eras: [
+      {
+        id: 'era1', label: 'ERA 1',
+        topics: [
+          { id: 't1', label: 'Introducción a la Anatomía', done: false },
+          { id: 't2', label: 'Sistema Óseo — Generalidades', done: false },
+          { id: 't3', label: 'Columna Vertebral', done: false },
+        ]
+      },
+      {
+        id: 'era2', label: 'ERA 2',
+        topics: [
+          { id: 't4', label: 'Miembro Superior', done: false },
+          { id: 't5', label: 'Miembro Inferior', done: false },
+          { id: 't6', label: 'Articulaciones', done: false },
+        ]
+      },
+      {
+        id: 'era3', label: 'ERA 3',
+        topics: [
+          { id: 't7', label: 'Sistema Muscular', done: false },
+          { id: 't8', label: 'Tórax y Abdomen', done: false },
+          { id: 't9', label: 'Pelvis y Periné', done: false },
+        ]
+      }
+    ]
+  },
+  {
+    id: 'w-heg', name: 'HEG', desc: 'Histología, Embriología y Genética',
+    total: 40, completed: 0, eras: []
+  },
+  {
+    id: 'w-aps2', name: 'APS II', desc: 'Atención Primaria de Salud II',
+    total: 30, completed: 0, eras: []
+  },
+];
+
+function seedYear2() {
+  if (!state.classes['2'] || state.classes['2'].length === 0) {
+    state.classes['2'] = DEFAULT_YEAR2.map(s => ({ ...s }));
+    save();
+  }
+}
 
 function save() { localStorage.setItem('medos-state', JSON.stringify(state)); }
 
@@ -776,15 +826,282 @@ function checkStreak() {
   save();
 }
 
+// ══════════════════════════════════════════════════════════════
+//  LIQUID GLASS FLOATING WIDGETS
+// ══════════════════════════════════════════════════════════════
+
+function getWidgetState(id) {
+  if (!state.widgets[id]) {
+    // Default positions spread across screen
+    const defaults = {
+      'w-anatomia': { x: 80,  y: 120, w: 280, h: 'auto', collapsed: false },
+      'w-heg':      { x: 400, y: 140, w: 250, h: 'auto', collapsed: false },
+      'w-aps2':     { x: 700, y: 130, w: 250, h: 'auto', collapsed: false },
+    };
+    state.widgets[id] = defaults[id] || { x: 100, y: 100, w: 260, h: 'auto', collapsed: false };
+  }
+  return state.widgets[id];
+}
+
+function createWidget(subject) {
+  const ws = getWidgetState(subject.id);
+  const el = document.createElement('div');
+  el.className = 'liquid-widget glass-card';
+  el.id = 'widget-' + subject.id;
+  el.style.left   = ws.x + 'px';
+  el.style.top    = ws.y + 'px';
+  el.style.width  = ws.w + 'px';
+  if (ws.collapsed) el.classList.add('collapsed');
+
+  const hasEras = subject.eras && subject.eras.length > 0;
+
+  el.innerHTML = `
+    <div class="lw-header" data-id="${subject.id}">
+      <div class="lw-title-row">
+        <div class="lw-dot"></div>
+        <span class="lw-title">${subject.name}</span>
+        <span class="lw-subject-tag">${subject.desc.split(' ').slice(0,2).join(' ')}</span>
+      </div>
+      <div class="lw-controls">
+        <button class="lw-btn lw-shrink" title="Colapsar">−</button>
+        <button class="lw-btn lw-expand" title="Expandir">+</button>
+        <button class="lw-btn lw-close" title="Cerrar">×</button>
+      </div>
+    </div>
+    <div class="lw-body">
+      ${hasEras ? renderErasHTML(subject) : renderSimpleWidgetBody(subject)}
+    </div>
+    <div class="lw-resize">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+        <path d="M11 1L1 11M11 6L6 11M11 11" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+    </div>
+  `;
+
+  document.body.appendChild(el);
+  initWidgetInteractions(el, subject);
+  return el;
+}
+
+function renderErasHTML(subject) {
+  return subject.eras.map(era => {
+    const done  = era.topics.filter(t => t.done).length;
+    const total = era.topics.length;
+    return `
+      <div class="era-pill" data-era-id="${era.id}" data-subject-id="${subject.id}">
+        <span class="era-pill-name">${era.label}</span>
+        <span class="era-pill-count">${done}/${total}</span>
+        <div class="era-pill-topics">
+          ${era.topics.map(t => `
+            <div class="topic-item ${t.done ? 'done' : ''}"
+                 data-topic-id="${t.id}" data-era-id="${era.id}" data-subject-id="${subject.id}">
+              <div class="topic-check">${t.done ? '✓' : ''}</div>
+              <span class="topic-name">${t.label}</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderSimpleWidgetBody(subject) {
+  const cls = (state.classes['2'] || []).find(c => c.id === subject.id);
+  const pct = cls ? Math.round((cls.completed / cls.total) * 100) : 0;
+  const notes = state.notes.filter(n => n.subject === subject.name && n.year == 2);
+  return `
+    <div style="padding:4px 0 8px">
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">${pct}% completado · ${notes.length} notas</div>
+      <div style="height:4px;background:rgba(255,255,255,0.07);border-radius:2px;overflow:hidden">
+        <div style="height:100%;width:${pct}%;background:rgba(255,255,255,0.45);border-radius:2px;transition:width .8s"></div>
+      </div>
+      <div style="margin-top:12px;font-size:12px;color:var(--text-muted)">Sin contenido ERAs definido aún.</div>
+    </div>
+  `;
+}
+
+function initWidgetInteractions(el, subject) {
+  const header = el.querySelector('.lw-header');
+  const btnShrink = el.querySelector('.lw-shrink');
+  const btnExpand = el.querySelector('.lw-expand');
+  const btnClose  = el.querySelector('.lw-close');
+  const resizeEl  = el.querySelector('.lw-resize');
+
+  // Collapse / expand
+  btnShrink.addEventListener('click', e => {
+    e.stopPropagation();
+    el.classList.add('collapsed');
+    state.widgets[subject.id].collapsed = true;
+    save();
+  });
+
+  btnExpand.addEventListener('click', e => {
+    e.stopPropagation();
+    el.classList.remove('collapsed');
+    state.widgets[subject.id].collapsed = false;
+    save();
+  });
+
+  btnClose.addEventListener('click', e => {
+    e.stopPropagation();
+    el.style.opacity = '0';
+    el.style.transform = 'scale(0.9)';
+    el.style.transition = 'all .25s';
+    setTimeout(() => el.remove(), 280);
+  });
+
+  // ERA accordion
+  el.querySelectorAll('.era-pill').forEach(pill => {
+    pill.addEventListener('click', e => {
+      if (e.target.closest('.topic-item')) return;
+      pill.classList.toggle('expanded');
+    });
+  });
+
+  // Topic checkboxes
+  el.querySelectorAll('.topic-item').forEach(item => {
+    item.addEventListener('click', e => {
+      e.stopPropagation();
+      const subjectId = item.dataset.subjectId;
+      const eraId     = item.dataset.eraId;
+      const topicId   = item.dataset.topicId;
+
+      const cls2 = (state.classes['2'] || []).find(c => c.id === subjectId);
+      if (!cls2 || !cls2.eras) return;
+
+      const era = cls2.eras.find(er => er.id === eraId);
+      if (!era) return;
+
+      const topic = era.topics.find(t => t.id === topicId);
+      if (!topic) return;
+
+      topic.done = !topic.done;
+      save();
+
+      item.classList.toggle('done', topic.done);
+      item.querySelector('.topic-check').textContent = topic.done ? '✓' : '';
+
+      // Update count
+      const pill = item.closest('.era-pill');
+      const totalDone = era.topics.filter(t => t.done).length;
+      pill.querySelector('.era-pill-count').textContent = `${totalDone}/${era.topics.length}`;
+    });
+  });
+
+  // ── Drag ──
+  makeDraggable(el, header, subject.id);
+
+  // ── Resize ──
+  makeResizable(el, resizeEl, subject.id);
+}
+
+function makeDraggable(el, handle, id) {
+  let startX, startY, startLeft, startTop;
+
+  handle.addEventListener('mousedown', e => {
+    if (e.target.closest('.lw-controls')) return;
+    e.preventDefault();
+    el.classList.add('dragging');
+    startX    = e.clientX;
+    startY    = e.clientY;
+    startLeft = el.offsetLeft;
+    startTop  = el.offsetTop;
+
+    function onMove(e) {
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+      const newLeft = Math.max(0, startLeft + dx);
+      const newTop  = Math.max(0, startTop  + dy);
+      el.style.left = newLeft + 'px';
+      el.style.top  = newTop  + 'px';
+    }
+
+    function onUp() {
+      el.classList.remove('dragging');
+      state.widgets[id] = state.widgets[id] || {};
+      state.widgets[id].x = el.offsetLeft;
+      state.widgets[id].y = el.offsetTop;
+      save();
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup',   onUp);
+    }
+
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup',   onUp);
+  });
+
+  // Touch drag
+  handle.addEventListener('touchstart', e => {
+    if (e.target.closest('.lw-controls')) return;
+    const t = e.touches[0];
+    el.classList.add('dragging');
+    startX    = t.clientX; startY    = t.clientY;
+    startLeft = el.offsetLeft; startTop  = el.offsetTop;
+
+    function onMove(e) {
+      const touch = e.touches[0];
+      el.style.left = Math.max(0, startLeft + touch.clientX - startX) + 'px';
+      el.style.top  = Math.max(0, startTop  + touch.clientY - startY) + 'px';
+    }
+    function onUp() {
+      el.classList.remove('dragging');
+      state.widgets[id] = state.widgets[id] || {};
+      state.widgets[id].x = el.offsetLeft;
+      state.widgets[id].y = el.offsetTop;
+      save();
+      handle.removeEventListener('touchmove', onMove);
+      handle.removeEventListener('touchend',  onUp);
+    }
+    handle.addEventListener('touchmove', onMove, { passive: true });
+    handle.addEventListener('touchend',  onUp);
+  }, { passive: true });
+}
+
+function makeResizable(el, handle, id) {
+  let startX, startY, startW, startH;
+
+  handle.addEventListener('mousedown', e => {
+    e.stopPropagation(); e.preventDefault();
+    startX = e.clientX; startY = e.clientY;
+    startW = el.offsetWidth; startH = el.offsetHeight;
+
+    function onMove(e) {
+      const w = Math.max(220, startW + e.clientX - startX);
+      const h = Math.max(80,  startH + e.clientY - startY);
+      el.style.width  = w + 'px';
+      el.style.height = h + 'px';
+      el.querySelector('.lw-body').style.maxHeight = (h - 80) + 'px';
+    }
+    function onUp() {
+      state.widgets[id] = state.widgets[id] || {};
+      state.widgets[id].w = el.offsetWidth;
+      save();
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup',   onUp);
+    }
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup',   onUp);
+  });
+}
+
+function initWidgets() {
+  seedYear2();
+  const subjects = state.classes['2'] || [];
+  const widgetSubjects = subjects.filter(s => ['w-anatomia','w-heg','w-aps2'].includes(s.id));
+  widgetSubjects.forEach(s => createWidget(s));
+}
+
 // ── Init ───────────────────────────────────────────────────
 function init() {
   checkStreak();
+  seedYear2();
   initSidebar();
   initModals();
   initFlashcardInteractions();
   initChat();
   initParallax();
   initParticles();
+  initWidgets();
   renderDashboard();
   initScrollReveal();
 
